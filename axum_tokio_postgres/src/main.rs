@@ -1,6 +1,7 @@
 use axum::routing::post;
 use axum::Extension;
 use axum::Router;
+use controller::task;
 use dotenv::dotenv;
 use std::env;
 use std::sync::Arc;
@@ -31,14 +32,15 @@ async fn main() {
     let client: Arc<Client> = Arc::new(client);
     let app_state = AppState { db: client };
     let app = Router::new()
-        .route("/create", post(controller::handler_create))
-        .route("/list", post(controller::handler_get_list))
+        .route("/create", post(task::handler_create))
+        .route("/list", post(task::handler_get_list))
+        .route("/update/:task_id", post(task::handler_update))
         .layer(Extension(app_state));
 
     let addr = "127.0.0.1:8000".parse().unwrap();
     println!("Listening on {}", addr);
     axum::Server::bind(&addr)
-        .serve(app.into_make_service())         
+        .serve(app.into_make_service())
         .await
         .unwrap();
 }
