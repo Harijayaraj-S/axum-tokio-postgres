@@ -1,3 +1,4 @@
+use axum::routing::get;
 use axum::routing::post;
 use axum::Extension;
 use axum::Router;
@@ -5,6 +6,7 @@ use controller::task;
 use dotenv::dotenv;
 use std::env;
 use std::sync::Arc;
+use tokio::signal;
 use tokio_postgres::{Client, NoTls};
 mod api;
 mod controller;
@@ -33,14 +35,40 @@ async fn main() {
     let app_state = AppState { db: client };
     let app = Router::new()
         .route("/create", post(task::handler_create))
-        .route("/list", post(task::handler_get_list))
+        .route("/list", get(task::handler_get_list))
         .route("/update/:task_id", post(task::handler_update))
+        .route("/delete/:task_id", post(task::handler_delete))
         .layer(Extension(app_state));
 
     let addr = "127.0.0.1:8000".parse().unwrap();
     println!("Listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
+        .with_graceful_shutdown(shutdown_signal())
         .await
         .unwrap();
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
 }

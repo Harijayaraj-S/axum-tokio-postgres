@@ -1,6 +1,7 @@
 // controllers
 
-use axum::{extract::Path, Extension, Json};
+use axum::{extract::Path, response::Html, Extension, Json};
+use sailfish::TemplateOnce;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -24,12 +25,20 @@ pub async fn handler_create(
     Ok(Json(RestResponse { success }))
 }
 
+#[derive(TemplateOnce)]
+#[template(path = "list.stpl")]
+pub struct TaskList {
+    pub tasks: Vec<Task>,
+}
+
 pub async fn handler_get_list(
     Extension(app_state): Extension<AppState>,
-) -> Result<Json<Vec<Task>>, ControllerError> {
+) -> Result<Html<String>, ControllerError> {
     let db = app_state.db;
-    let item = task::get_list(db).await?;
-    Ok(Json(item))
+    let tasks = task::get_list(db).await?;
+    let ctx: TaskList = TaskList { tasks };
+
+    Ok(axum::response::Html(ctx.render_once().unwrap()))
 }
 
 pub async fn handler_update(
@@ -39,5 +48,14 @@ pub async fn handler_update(
 ) -> Result<Json<RestResponse>, ControllerError> {
     let db = app_state.db;
     let success = task::update(db, task_id, input).await?;
+    Ok(Json(RestResponse { success }))
+}
+
+pub async fn handler_delete(
+    Extension(app_state): Extension<AppState>,
+    Path(task_id): Path<i64>,
+) -> Result<Json<RestResponse>, ControllerError> {
+    let db = app_state.db;
+    let success = task::delete(db, task_id).await?;
     Ok(Json(RestResponse { success }))
 }

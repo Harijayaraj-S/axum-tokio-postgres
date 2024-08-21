@@ -1,4 +1,3 @@
-
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -8,12 +7,12 @@ use super::AppError;
 
 #[derive(Serialize, Deserialize)]
 pub struct Task {
-    id: i64,
-    title: String,
-    priority: String,
-    created_on: String,
-    is_done: bool,
-    description: Option<String>,
+    pub id: i64,
+    pub title: String,
+    pub priority: String,
+    pub created_on: String,
+    pub is_done: bool,
+    pub description: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -75,6 +74,14 @@ pub async fn update(
             "UPDATE task SET title = $1, priority = $2, description = $3 WHERE id = $4",
             &[&input.title, &input.priority, &input.description, &task_id],
         )
+        .await?;
+
+    Ok(row != 0)
+}
+
+pub async fn delete(db: Arc<Client>, task_id: i64) -> Result<bool, AppError> {
+    let row = db
+        .execute("DELETE FROM task WHERE id = $1", &[&task_id])
         .await?;
 
     Ok(row != 0)

@@ -1,0 +1,5 @@
+<% for task in tasks { %>
+    <%= task.id %>
+    <%= task.title %>
+    <%= task.created_on %>
+<% } %>
