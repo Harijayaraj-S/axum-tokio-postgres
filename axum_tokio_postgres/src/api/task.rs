@@ -32,7 +32,7 @@ pub struct CreateTask {
 pub async fn create_task(db: Arc<Client>, input: CreateTask) -> Result<bool, AppError> {
     let id = db
         .execute(
-            "INSERT INTO task (titl, priority, description, is_done)  
+            "INSERT INTO task (title, priority, description, is_done)  
             VALUES ($1, $2, $3, $4) RETURNING id",
             &[&input.title, &input.priority, &input.description, &false],
         )

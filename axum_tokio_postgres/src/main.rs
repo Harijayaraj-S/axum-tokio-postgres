@@ -5,9 +5,11 @@ use axum::Router;
 use controller::task;
 use dotenv::dotenv;
 use std::env;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::signal;
 use tokio_postgres::{Client, NoTls};
+use tower_http::services::ServeDir;
 mod api;
 mod controller;
 
@@ -38,12 +40,13 @@ async fn main() {
         .route("/list", get(task::handler_get_list))
         .route("/update/:task_id", post(task::handler_update))
         .route("/delete/:task_id", post(task::handler_delete))
+        .route("/", get(task::handler_home))
+        .nest_service("/assets", ServeDir::new("assets"))
         .layer(Extension(app_state));
 
-    let addr = "127.0.0.1:8000".parse().unwrap();
-    println!("Listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+    let addr = SocketAddr::from(([127, 0, 0, 1], 8000));
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await
         .unwrap();

@@ -1,5 +1,6 @@
 <% for task in tasks { %>
-    <%= task.id %>
-    <%= task.title %>
-    <%= task.created_on %>
+   <div class="task-card">
+        <h3><%= task.title %></h3>
+        <p class="created-on">Created on: <%= task.created_on %></p>
+    </div>
 <% } %>

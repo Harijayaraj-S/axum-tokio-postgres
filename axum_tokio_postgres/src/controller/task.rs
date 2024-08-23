@@ -43,8 +43,8 @@ pub async fn handler_get_list(
 
 pub async fn handler_update(
     Extension(app_state): Extension<AppState>,
-    Json(input): Json<TaskUpdateInput>,
     Path(task_id): Path<i64>,
+    Json(input): Json<TaskUpdateInput>,
 ) -> Result<Json<RestResponse>, ControllerError> {
     let db = app_state.db;
     let success = task::update(db, task_id, input).await?;
@@ -58,4 +58,13 @@ pub async fn handler_delete(
     let db = app_state.db;
     let success = task::delete(db, task_id).await?;
     Ok(Json(RestResponse { success }))
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "home.stpl")]
+pub struct TaskHome;
+
+pub async fn handler_home() -> Result<Html<String>, ControllerError> {
+    let ctx = TaskHome;
+    Ok(axum::response::Html(ctx.render_once().unwrap()))
 }
