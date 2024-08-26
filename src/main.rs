@@ -1,3 +1,5 @@
+// Main
+
 use axum::routing::get;
 use axum::routing::post;
 use axum::Extension;
@@ -46,6 +48,7 @@ async fn main() {
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8000));
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await
